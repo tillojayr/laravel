@@ -1,0 +1,73 @@
+version: '3.8'
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: laravel-app
+    restart: unless-stopped
+    working_dir: /var/www
+    volumes:
+      - .:/var/www
+      - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini
+    networks:
+      - laravel-network
+    ports:
+      - "9000:9000"
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=true
+
+  webserver:
+    image: nginx:alpine
+    restart: unless-stopped
+    ports:
+      # - "443:443"
+      - "80:80"
+    volumes:
+      - .:/var/www
+      # - ./docker/nginx/sites-enabled:/etc/nginx/sites-enabled
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d
+      # - /etc/letsencrypt:/etc/letsencrypt
+    networks:
+      - laravel-network
+
+  db:
+    image: mysql:8.0
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_DATABASE: laravel
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_PASSWORD: root
+      MYSQL_USER: laravel
+    volumes:
+      - dbdata:/var/lib/mysql
+    networks:
+      - laravel-network
+
+  ftp:
+      image: fauria/vsftpd
+      ports:
+          - "21:21"
+          - "20:20"
+          - "21100-21110:21100-21110"
+      environment:
+          - FTP_USER=ftpuser
+          - FTP_PASS=ftppass
+          - PASV_ADDRESS=0.0.0.0
+          - PASV_MIN_PORT=21100
+          - PASV_MAX_PORT=21110
+      volumes:
+          - ./public/ftp:/home/vsftpd
+      networks:
+        - laravel-network
+
+networks:
+  laravel-network:
+    driver: bridge
+
+volumes:
+  dbdata:
+    driver: local
