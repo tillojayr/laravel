@@ -6,7 +6,7 @@ use App\Http\Middleware\CheckAdmin;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\ProductController;
 
-Route::view('/', 'welcome');
+Route::redirect('/', 'login');
 
 Route::view('dashboard', 'dashboard')
     ->middleware(['auth', 'verified'])
