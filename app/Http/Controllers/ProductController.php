@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Events\ProductCreated;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
@@ -26,14 +27,30 @@ class ProductController extends Controller
             'title' => 'required',
             'body' => 'required',
             'quantity' => 'required|integer',
+            'image' => 'required|image|max:2048'
         ]);
 
         $validated['user_id'] = Auth()->user()->id;
 
-        $product = new Product();
-        $product->fill($validated);
-        $product->save();
+        if ($request->hasFile('image')) {
+            $image = $request->file('image');
+            $filename = $image->getClientOriginalName();
+            
+            // Get the file content
+            $fileContent = file_get_contents($image->getRealPath());
+            
+            // Use Storage facade to store the file
+            $stored = Storage::disk('ftp')->put('products/'.$filename, $fileContent);
+            
+            if (!$stored) {
+                return back()->with('error', 'Failed to upload image to FTP server.');
+            }
+            
+            $validated['image_path'] = 'products/'.$filename;
+        }
 
+        $product = Product::create($validated);
+        
         // Dispatch the event
         ProductCreated::dispatch($product);
 
@@ -51,7 +68,29 @@ class ProductController extends Controller
             'title' => 'required',
             'body' => 'required',
             'quantity' => 'required|integer',
+            'image' => 'required|image|max:2048'
         ]);
+
+        if ($request->hasFile('image')) {
+            if ($product->image_path) {
+                Storage::disk('ftp')->delete('products/' . $product->image_path);
+            }
+            
+            $image = $request->file('image');
+            $filename = $image->getClientOriginalName();
+            
+            // Get the file content
+            $fileContent = file_get_contents($image->getRealPath());
+            
+            // Use Storage facade to store the file
+            $stored = Storage::disk('ftp')->put('products/'.$filename, $fileContent);
+            
+            if (!$stored) {
+                return back()->with('error', 'Failed to upload image to FTP server.');
+            }
+            
+            $validated['image_path'] = 'products/'.$filename;
+        }
 
         $product->update($validated);
 

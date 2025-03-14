@@ -2,7 +2,10 @@
     <div class="container py-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2>Products Management</h2>
-            <a href="{{ route('admin.products.create') }}" class="btn btn-primary">Add New Product</a>
+            <div>
+                <a href="{{ route('admin.products.create') }}" class="btn btn-primary">Add New Product</a>
+                <a href="{{ route('admin.products.api.create') }}" class="btn btn-primary">Add New Product from API</a>
+            </div>
         </div>
 
         @if (session('success'))

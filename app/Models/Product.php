@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Scopes\NotDeletedScope;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class Product extends Model
 {
@@ -33,6 +34,10 @@ class Product extends Model
     {
         if (!$this->image_path) {
             return null;
+        }
+
+        if (Str::startsWith($this->image_path, 'https://')) {
+            return $this->image_path;
         }
 
         $fileContents = Storage::disk('ftp')->get($this->image_path);

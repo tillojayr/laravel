@@ -47,6 +47,21 @@ services:
     networks:
       - laravel-network
 
+  test-db:
+    image: mysql:8.0
+    restart: unless-stopped
+    ports:
+      - "3307:3306"  # Changed port to 3307 to avoid conflict
+    environment:
+      MYSQL_DATABASE: test_laravel  # Changed to a test database
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_PASSWORD: root
+      MYSQL_USER: laravel
+    volumes:
+      - test-dbdata:/var/lib/mysql  # Separate volume for test DB
+    networks:
+      - laravel-network
+
   ftp:
       image: fauria/vsftpd
       ports:
@@ -69,5 +84,6 @@ networks:
     driver: bridge
 
 volumes:
+  test-dbdata:  # Separate volume for test DB
   dbdata:
     driver: local

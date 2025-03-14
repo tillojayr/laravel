@@ -2,7 +2,6 @@
     <div class="container py-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2>Products Management</h2>
-            <a href="{{ route('products.create') }}" class="btn btn-primary">Add New Product</a>
         </div>
 
         @if (session('success'))
@@ -20,7 +19,6 @@
                         <th>Image</th>
                         <th>Title</th>
                         <th>Body</th>
-                        <th>Assigned To</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -28,21 +26,20 @@
                     @foreach($products as $product)
                     <tr>
                         <td>
-                            @if($product->image_path)
-                                <img src="{{ $product->image_url }}" alt="{{ $product->name }}" class="img-thumbnail" style="max-width: 100px">
+                            @if(isset($product->image))
+                                <img src="{{ $product->image }}" alt="{{ $product->title }}" class="img-thumbnail" style="max-width: 100px">
+                            @elseif(isset($product->images[0]))
+                                <img src="{{ $product->images[0] }}" alt="{{ $product->title }}" class="img-thumbnail" style="max-width: 100px">
                             @else
                                 No Image
                             @endif
                         </td>
                         <td>{{ $product->title }}</td>
-                        <td>{{ $product->body }}</td>
-                        <td>{{ $product->user ? $product->user->name : 'Not Assigned' }}</td>
+                        <td>{{ $product->description }}</td>
                         <td>
-                            <a href="{{ route('products.edit', $product) }}" class="btn btn-sm btn-primary">Edit</a>
-                            <form action="{{ route('products.destroy', $product) }}" method="POST" class="d-inline">
+                            <form action="{{ route('admin.products.api.store', $product->id) }}" method="POST" style="display:inline;">
                                 @csrf
-                                @method('DELETE')
-                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">Delete</button>
+                                <button type="submit" class="btn btn-sm btn-primary">+ Add</button>
                             </form>
                         </td>
                     </tr>

@@ -15,7 +15,7 @@ class ProductSeeder extends Seeder
     public function run(): void
     {
         for ($i = 0; $i < 5; $i++) {
-            Product::factory()->create([
+            Product::factory()->count(fake()->numberBetween(1, 5))->create([
                 'user_id' => User::factory()->create()->id,
             ]);
         }

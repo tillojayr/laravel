@@ -5,14 +5,26 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Events\ProductCreated;
+use App\Services\ProductService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
+    protected $productService;
+
+    public function __construct(ProductService $productService)
+    {
+        $this->productService = $productService;
+    }
+    
     public function index()
     {
-        $products = Product::with('user')->get();
+        $products = Cache::remember('products_with_users', now()->addMinutes(10), function () {
+            return Product::with('user')->get();
+        });
+    
         return view('admin.products.index', compact('products'));
     }
 
@@ -74,12 +86,19 @@ class ProductController extends Controller
             }
             
             $image = $request->file('image');
-            $imagePath = $image->storeAs('products', $image->getClientOriginalName(), 'ftp');
-            if ($imagePath === false) {
+            $filename = $image->getClientOriginalName();
+            
+            // Get the file content
+            $fileContent = file_get_contents($image->getRealPath());
+            
+            // Use Storage facade to store the file
+            $stored = Storage::disk('ftp')->put('products/'.$filename, $fileContent);
+            
+            if (!$stored) {
                 return back()->with('error', 'Failed to upload image to FTP server.');
             }
-
-            $validated['image_path'] = $image->getClientOriginalName();
+            
+            $validated['image_path'] = 'products/'.$filename;
         }
 
         $product->update($validated);
@@ -96,5 +115,26 @@ class ProductController extends Controller
         $product->del_flag = true;
         $product->save();
         return back()->with('success', 'Product deleted successfully');
+    }
+
+    public function createFromApi()
+    {
+        $products = $this->productService->getAllProduct()->getData();
+        return view('admin.products.createFromApi', compact('products'));
+    }
+
+    public function storeFromApi(int $productId) 
+    {
+        $product = $this->productService->getSingleProduct($productId)->getData();
+
+        Product::create([
+            'title' => $product->title,
+            'body' => $product->description,
+            'image_path' => (isset($product->image) ? $product->image : $product->images[0]),
+        ]);
+
+        Cache::forget('products_with_users');
+
+        return redirect()->route('admin.products.index')->with('success', 'Products created successfully');
     }
 }

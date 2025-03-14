@@ -19,6 +19,8 @@ Route::view('profile', 'profile')
 Route::middleware(['auth', CheckAdmin::class])->prefix('admin')->name('admin.')->group(function () {
     Route::get('users', [AdminController::class, 'users'])->name('admin.users');
     Route::resource('products', AdminProductController::class);
+    Route::get('products/api/create', [AdminProductController::class, 'createFromApi'])->name('products.api.create');
+    Route::post('products/api/store/{product}', [AdminProductController::class, 'storeFromApi'])->name('products.api.store');
 });
 
 Route::middleware(['auth'])->group(function () {
